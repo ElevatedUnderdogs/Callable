@@ -19,7 +19,10 @@ extension ProvidesSessionDataTask where Self: HasAbsoluteString {
     /// attempts to get data from a Callable resource
     /// - Parameter dataAction: access the data here.  Passes nil if could not get the data.
     public func getData(_ dataAction: DataAction? = nil) {
-        sessionDataTask(provideData: dataAction).resume()
+        sessionDataTaskError(provideData: dataAction, errorHandler: { error in
+            assertionFailure("Error with the data task: \(error)")
+        }).resume()
+        // sessionDataTask(provideData: dataAction, ).resume()
     }
 
     /// attempts to get data from a Callable resource
@@ -38,7 +41,7 @@ extension ProvidesSessionDataTask where Self: HasAbsoluteString {
     /// - Parameter jsonAction: access the JSON here.  Passes nil if could not get JSON.
     public func callJSON(_ jsonAction: DictionaryAction? = nil) {
         sessionDataTask(provideJSON: jsonAction, errorHandler: { error in
-            print(error)
+            assertionFailure("Error was: \(error)")
         }).resume()
     }
 
@@ -106,11 +109,20 @@ extension ProvidesSessionDataTask where Self: HasAbsoluteString {
 
 
 
-    private func sessionDataTask(expressive: Bool = false, provideData: DataAction?) -> URLSessionDataTask {
+    private func sessionDataTask(
+        expressive: Bool = false,
+        provideData: DataAction?,
+        errorHandler: ErrorHandler? = nil
+    ) -> URLSessionDataTask {
         session { data, response, error in
+            if let error {
+                if errorHandler == nil {
+                    assertionFailure(error.localizedDescription)
+                }
+                errorHandler?(error)
+            }
             guard let data = data else {
                 errorPrint()
-                provideData?("error: \(error?.localizedDescription ?? "nil")".data(using: .utf8)!)
                 return
             }
             provideData?(data)
@@ -123,12 +135,14 @@ extension ProvidesSessionDataTask where Self: HasAbsoluteString {
         errorHandler: ErrorHandler?
     ) -> URLSessionDataTask {
         session { data, response, error in
-            if let error = error {
+            if let error {
+                if errorHandler == nil {
+                    assertionFailure(error.localizedDescription)
+                }
                 errorHandler?(error)
             }
             guard let data = data else {
                 errorPrint()
-                provideData?("error: \(error?.localizedDescription ?? "nil")".data(using: .utf8)!)
                 return
             }
             provideData?(data)
@@ -139,8 +153,14 @@ extension ProvidesSessionDataTask where Self: HasAbsoluteString {
         print("ERROR: data was nil for the call from: \(self), ")
     }
 
-    private func sessionDataTask(provideString: StringAction?) -> URLSessionDataTask {
+    private func sessionDataTask(provideString: StringAction?, errorHandler: ErrorHandler? = nil) -> URLSessionDataTask {
         session { data, response, error in
+            if let error {
+                if errorHandler == nil {
+                    assertionFailure(error.localizedDescription)
+                }
+                errorHandler?(error)
+            }
             guard let data = data, error == nil, let document = String(data: data, encoding: .utf8) else {
                 errorPrint()
                 provideString?("")
@@ -154,8 +174,10 @@ extension ProvidesSessionDataTask where Self: HasAbsoluteString {
         provideJSON: DictionaryAction?,
         errorHandler: @escaping ErrorHandler
     ) -> URLSessionDataTask {
-        session {
-            data, response, error in
+        session { data, response, error in
+            if let error {
+                errorHandler(error)
+            }
             guard let data = data else {
                 errorPrint()
                 return

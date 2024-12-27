@@ -20,15 +20,20 @@ extension URL: ProvidesSessionDownloadDataTask {
     
     /// attempts to get data from a Callable resource
     /// - Parameter dataAction: access the data here.  Passes nil if could not get the data.
-    public func getDownloadData(_ dataAction: DataAction? = nil) {
-        sessionDownloadTask(provideData: dataAction).resume()
+    public func getDownloadData(_ dataAction: DataAction? = nil, errorHandler: ErrorHandler?) {
+        sessionDownloadTask(provideData: dataAction, errorHandler: errorHandler).resume()
     }
     
-    private func sessionDownloadTask(provideData: DataAction?) -> URLSessionDownloadTask {
+    private func sessionDownloadTask(provideData: DataAction?, errorHandler: ErrorHandler? = nil) -> URLSessionDownloadTask {
         URLSession.shared.downloadTask(with: self) { url, response, error in
+            if let error {
+                if errorHandler == nil {
+                    assertionFailure("handler was nil, but error was: \(error.localizedDescription)")
+                }
+                errorHandler?(error)
+            }
             guard let data = url?.data else {
                 errorPrint()
-                provideData?("error: \(error?.localizedDescription ?? "nil")".data(using: .utf8)!)
                 return
             }
             provideData?(data)
