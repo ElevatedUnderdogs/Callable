@@ -34,7 +34,6 @@ extension URL: ProvidesSessionDownloadDataTask {
             }
             guard let data = url?.data else {
                 errorPrint()
-                provideData?("error: \(error?.localizedDescription ?? "nil")".data(using: .utf8)!)
                 return
             }
             provideData?(data)

@@ -41,7 +41,7 @@ extension ProvidesSessionDataTask where Self: HasAbsoluteString {
     /// - Parameter jsonAction: access the JSON here.  Passes nil if could not get JSON.
     public func callJSON(_ jsonAction: DictionaryAction? = nil) {
         sessionDataTask(provideJSON: jsonAction, errorHandler: { error in
-            print(error)
+            assertionFailure("Error was: \(error)")
         }).resume()
     }
 
@@ -109,11 +109,20 @@ extension ProvidesSessionDataTask where Self: HasAbsoluteString {
 
 
 
-    private func sessionDataTask(expressive: Bool = false, provideData: DataAction?) -> URLSessionDataTask {
+    private func sessionDataTask(
+        expressive: Bool = false,
+        provideData: DataAction?,
+        errorHandler: ErrorHandler? = nil
+    ) -> URLSessionDataTask {
         session { data, response, error in
+            if let error {
+                if errorHandler == nil {
+                    assertionFailure(error.localizedDescription)
+                }
+                errorHandler?(error)
+            }
             guard let data = data else {
                 errorPrint()
-                provideData?("error: \(error?.localizedDescription ?? "nil")".data(using: .utf8)!)
                 return
             }
             provideData?(data)
@@ -134,7 +143,6 @@ extension ProvidesSessionDataTask where Self: HasAbsoluteString {
             }
             guard let data = data else {
                 errorPrint()
-                provideData?("error: \(error?.localizedDescription ?? "nil")".data(using: .utf8)!)
                 return
             }
             provideData?(data)
