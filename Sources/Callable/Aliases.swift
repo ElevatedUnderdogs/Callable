@@ -6,6 +6,10 @@
 //
 
 import Foundation
+#if canImport(FoundationNetworking)
+// Provided for `URL` related objects on Linux platforms.
+import FoundationNetworking
+#endif
 
 public typealias DataAction = (Data) -> Void
 public typealias PromiseAction = (Data?, URLResponse?, Error?) -> Void
