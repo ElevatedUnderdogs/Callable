@@ -1,5 +1,10 @@
 import XCTest
+#if canImport(FoundationNetworking)
+// Provided for `URL` related objects on Linux platforms.
+import FoundationNetworking
+#endif
 @testable import Callable
+
 
 final class CallableTests: XCTestCase {
 
