@@ -30,3 +30,9 @@ public struct GenericError: Error {
         self.text
     }
 }
+
+extension GenericError: LocalizedError {
+    public var errorDescription: String? {
+        errorWithoutFunc
+    }
+}
